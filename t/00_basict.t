@@ -1,5 +1,5 @@
 use Test;
 BEGIN { plan tests => 1 }
 END   { ok($loaded) }
-use Lingua::FR::Numbers::Ordinate;
+use Lingua::FR::Numbers;
 $loaded++;

@@ -10,10 +10,8 @@
 	21 => 'vingt et unième',
 	25 => 'vingt-cinquième',
 	29 => 'vingt-neuvième',
-	
 	80 => 'quatre-vingtième',	    # https://rt.cpan.org/Ticket/Display.html?id=1772
 	83 => 'quatre-vingt-troisième',	# ...
-
 	100 => 'centième',
 	101 => 'cent unième',
 	326 => 'trois cent vingt-sixième',

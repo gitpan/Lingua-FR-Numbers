@@ -4,12 +4,15 @@ use Test;
 BEGIN { plan tests => 4 }
 use Lingua::FR::Numbers qw( number_to_fr );
 
+# switch off warnings
+$SIG{__WARN__} = sub {};
+
 use vars qw(@numbers);
 @numbers = (
 	'foo'   => undef,
 	'12bar' => undef,
 	'12e2'  => 'mille deux cents',
-	1234567890123456 => undef,
+	1e80    => undef,
 );
 
 while (@numbers){

@@ -1,31 +1,121 @@
-==============================================================================
+NAME
+    Lingua::FR::Numbers - Converts numeric values into their French
+    string equivalents
 
- Release 0.03 of Lingua::FR::Numbers
+SYNOPSIS
+     # Procedural Style
+     use Lingua::FR::Numbers qw(number_to_fr ordinate_to_fr);
+     print number_to_fr( 345 );
 
-==============================================================================
+     my $vingt  = ordinate_to_fr( 20 );
+     print "Tintin est reporter au petit $vingt";
+
+     # OO Style
+     use Lingua::FR::Numbers;
+     my $number = Lingua::FR::Numbers->new( 123 );
+     print $number->get_string;
+     print $number->get_ordinate;
+
+     my $other_number = Lingua::FR::Numbers->new;
+     $other_number->parse( 7340 );
+     $french_string = $other_number->get_string;
 
 DESCRIPTION
+    This module converts a number into a French cardinal or ordinal. It
+    supports decimal numbers, but this feature is experimental.
 
-This is Lingua::FR::Numbers, a module for converting numbers into
-their French text equivalents.
+    The interface tries to conform to the one defined in
+    Lingua::EN::Number, though this module does not provide any parse()
+    method. Also, unlike Lingua::En::Numbers, you can use this module in
+    a procedural manner by importing the number_to_fr() function.
 
-==============================================================================
+    If you plan to use this module with greater numbers (>10e20), you
+    can use the Math::BigInt module:
+
+     use Math::BigInt;
+     use Lingua::FR::Numbers qw( number_to_fr );
+
+     my $big_num = new Math::BigInt '1.23e68';
+     print number_to_fr($big_num);
+     # cent vingt-trois quintillions de sextillions
+
+    This module should output strings for numbers up to, but not
+    including, 1e75, but due to a lack of documentation in French
+    grammar, it can only reliably output strings for numbers lower than
+    1e51. For example, 1e72 is 'un sextillion de sextillion', but I am
+    unable to say 1e51 or 1e69, at least for now.
+
+  VARIABLES
+FUNCTION-ORIENTED INTERFACE
+  number_to_fr( $number )
+     use Lingua::FR::Numbers qw(number_to_fr);
+     my $depth = number_to_fr( 20_000 );
+     my $year  = number_to_fr( 1870 );
+     print "Jules Vernes écrivit _$depth lieues sous les mers_ en $year.";
+
+    This function can be exported by the module.
+
+  ordinate_to_fr( $number )
+     use Lingua::FR::Numbers qw(ordinate_to_fr);
+     my $twenty  = ordinate_to_fr( 20 );
+     print "Tintin est reporter au petit $twenty";
+
+    This function can be exported by the module.
+
+OBJECT-ORIENTED INTERFACE
+  new( [ $number ] )
+     my $start = Lingua::FR::Numbers->new( 500 );
+     my $end   = Lingua::FR::Numbers->new( 3000 );
+     print "Nous partîmes ", $start->get_string, 
+           "; mais par un prompt renfort\n",
+           "Nous nous vîmes ", $end->get_string," en arrivant au port"
+
+    Creates and initializes a new instance of an object.
+
+  parse( $number )
+    Initializes (or reinitializes) the instance.
+
+  get_string()
+     my $string = $number->get_string;
+ 
+    Returns the number as a formatted string in French, lowercased.
+
+  get_ordinate()
+     my $string = $number->get_ordinate;
+ 
+    Returns the ordinal representation of the number as a formatted
+    string in French, lowercased.
+
+DIAGNOSTICS
+    Invalid number format: '$number'
+        (W) The number specified is not in a valid numeric format.
+
+    Number '$number' too big to be represented as string
+        (W) The number is too big to be converted into a string. Numbers
+            must be lower than 1e75-1.
+
+SOURCE
+    *Le français correct - Maurice GREVISSE*
+
+    *Décret n° 61-501 du 3 mai 1961. relatif aux unités de mesure et au
+    contrôle des instruments de mesure.* -
+    http://www.adminet.com/jo/dec61-501.html
+
+BUGS
+    Though the module should be able to convert big numbers (up to
+    10**36), I do not know how Perl handles them.
+
+    Please report any bugs or comments using the Request Tracker
+    interface:
+    https://rt.cpan.org/NoAuth/Bugs.html?Dist=Lingua-FR-Numbers
+
+COPYRIGHT
+    Copyright 2002, Briac Pilpré. All Rights Reserved. This module can
+    be redistributed under the same terms as Perl itself.
 
 AUTHOR
+    Briac Pilpré <briac@cpan.org>
 
-Briac Pilpré
-briac@cpan.org
-
-==============================================================================
-
-AVAILABILITY
-
-Lingua::FR::Numbers has been uploaded to the CPAN
-
-==============================================================================
-
-Copyright (c) 2002 Briac Pilpré. All rights reserved.
-
-This package is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
+SEE ALSO
+    Lingua::EN::Numbers, Lingua::Word2Num
 
