@@ -1,11 +1,11 @@
 package Lingua::FR::Numbers::Ordinate;
 use strict;
-use Lingua::FR::Numbers qw(number_to_fr);
+use Lingua::FR::Numbers;
 use Exporter;
 use Carp qw(carp);
 use vars qw( $VERSION @ISA %ORDINALS @EXPORT_OK $MODE );
 
-$VERSION   = 0.01;
+$VERSION   = $Lingua::FR::Numbers::VERSION;
 @ISA       = qw(Exporter Lingua::FR::Numbers);
 @EXPORT_OK = qw( &ordinate_fr &ordinate_fr_FR );
 
@@ -32,7 +32,7 @@ Lingua::FR::Numbers::Ordinate - Convert numbers into French ordinate adjectives.
 =head2 ordinate_fr_FR( $number )
 
  use Lingua::FR::Numbers::Ordinate qw(ordinate_fr);
- my $twenty  = number_to_fr( 20 );
+ my $vingt  = ordinate_fr( 20 );
  print "Tintin est reporter au petit $vingt";
 
 These two functions (which are the same at the moment) can be exported
@@ -100,12 +100,13 @@ sub get_string {
 			return $ORDINALS{$MODE}->{ 1 };
 		}
 		elsif ( $_ != 1 && $last == $_ ){
-			my $replace = number_to_fr( $last );
+			my $replace = Lingua::FR::Numbers::number_to_fr( $last );
 			$ordinal =~ s/$replace$/$ORDINALS{$MODE}->{$_}/;
 		}
 	}
 	
     $ordinal =~ s/e?$/ième/;
+	$ordinal =~ s/vingtsième/vingtième/;	# Bug #1772
     $ordinal;
 }
 

@@ -1,5 +1,5 @@
 Changes
-MANIFEST
+MANIFEST			This list of files
 Makefile.PL
 README
 lib/Lingua/FR/Numbers.pm

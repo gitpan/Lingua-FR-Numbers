@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Test;
-BEGIN { plan tests => 17 }
+BEGIN { plan tests => 20 }
 use Lingua::FR::Numbers::Ordinate qw( ordinate_fr );
 
 use vars qw( @numbers );

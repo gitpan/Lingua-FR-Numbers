@@ -3,6 +3,7 @@ use strict;
 
 use Carp qw(carp);
 use Exporter;
+use Lingua::FR::Numbers::Ordinate qw(ordinate_fr);
 
 use vars qw( $VERSION @ISA @EXPORT_OK );
 use vars qw(
@@ -12,20 +13,17 @@ use vars qw(
   %OUTPUT_DECIMAL_DELIMITER
 );
 
-$VERSION   = 0.02;
+$VERSION   = 0.03;
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(
   &number_to_fr
   &number_to_fr_FR
+  %NUMBER_NAMES
 );
 
-%SIGN_NAMES = (
-    'fr_FR' => [ 'moins', '' ],
-);
+%SIGN_NAMES = ( 'fr_FR' => [ 'moins', '' ], );
 
-%OUTPUT_DECIMAL_DELIMITER = (
-    'fr_FR' => 'virgule',
-);
+%OUTPUT_DECIMAL_DELIMITER = ( 'fr_FR' => 'virgule', );
 
 %NUMBER_NAMES = (
     'fr_FR' => {
@@ -65,7 +63,7 @@ $VERSION   = 0.02;
         10**18 => 'trillion',
         10**24 => 'quatrillion',
         10**30 => 'quintillion',
-        10**36 => 'sextillion',		# the sextillion is the biggest legal unit
+        10**36 => 'sextillion',    # the sextillion is the biggest legal unit
     },
 
 );
@@ -136,6 +134,9 @@ sub number_to_fr {
     my $locale = shift;
     return undef unless defined $number;
     my $num = Lingua::FR::Numbers->new($number) or return undef;
+
+    #use Data::Dumper; print Dumper $num;
+
     $num->get_string( MODE => $locale );
 }
 
@@ -191,12 +192,12 @@ sub parse {
     $self->{numeric_data}{number} = $number;
 
     $self->{numeric_data}{decimal} = $decimal;
-    $self->{numeric_data}{sign} = $sign;
+    $self->{numeric_data}{sign}    = $sign;
 
     $self->{string_data}{number} = parse_number($number);
 
-    $self->{string_data}{decimal}  = parse_number($decimal);
-    $self->{string_data}{sign} = $SIGN_NAMES{$MODE}[$sign];
+    $self->{string_data}{decimal} = parse_number($decimal);
+    $self->{string_data}{sign}    = $SIGN_NAMES{$MODE}[$sign];
 
     return 1;
 }
@@ -219,14 +220,29 @@ sub get_string {
     my %options = @_;
     my $string;
 
+    # Integral
     if ( !$self->{numeric_data}{sign} ) {
         $string .= $self->{string_data}{sign} . " ";
     }
     $string .= $self->do_get_string('number');
+
+    #
+    # Decimals
+    #
     if ( $self->{numeric_data}{decimal} ) {
         $string .= " $OUTPUT_DECIMAL_DELIMITER{$MODE} ";
+        my $decimal_power;
+        if ( $self->{numeric_data}{decimal} =~ s/^(0+)// ) {
+            $decimal_power = 10**length $1;
+        }
+
         $string .= $self->do_get_string('decimal');
+        if ($decimal_power) {
+            $string .= ' ' . ordinate_fr($decimal_power);
+            $string .= 's' if $self->{numeric_data}{decimal} > 1;
+        }
     }
+
     $string =~ s/^\s+|\s+$//g;
     return $string;
 }
@@ -245,38 +261,44 @@ sub do_get_string {
         # Let's throw in some grammar rules
 
         # pluriel million, milliard, ...
-        if ( $component >= 10**6 && $factor->[0][0]
-          && $factor->[0][0] ne $NUMBER_NAMES{$MODE}{1} )
+        if ( $component >= 10**6
+            && $factor->[0][0]
+            && $factor->[0][0] ne $NUMBER_NAMES{$MODE}{1} )
         {
             $magnitude .= "s";
         }
 
         # 'un cent' => 'cent'
-        if ( $factor->[0][0] && $factor->[0][1]
-          && $factor->[0][0] eq $NUMBER_NAMES{$MODE}{1}
-          && $factor->[0][1] eq $NUMBER_NAMES{$MODE}{100} )
+        if ( $factor->[0][0]
+            && $factor->[0][1]
+            && $factor->[0][0] eq $NUMBER_NAMES{$MODE}{1}
+            && $factor->[0][1] eq $NUMBER_NAMES{$MODE}{100} )
         {
             splice( @{ $factor->[0] }, 0, 1 );
         }
 
         # 'un mille' => 'mille'
         if ( $magnitude eq $NUMBER_NAMES{$MODE}{1000}
-          && $factor->[0][0] eq $NUMBER_NAMES{$MODE}{1} )
+            && $factor->[0][0] eq $NUMBER_NAMES{$MODE}{1} )
         {
             $factor = [];
         }
 
         # pluriel cent: 'trois cents' but 'trois cent deux'
-        if ( !$factor->[1] && !$magnitude && $factor->[0][1] && $factor->[0][0]
-          && $factor->[0][0] ne $NUMBER_NAMES{$MODE}{1}
-          && $factor->[0][1] eq $NUMBER_NAMES{$MODE}{100} )
+        if ( !$factor->[1]
+            && !$magnitude
+            && $factor->[0][1]
+            && $factor->[0][0]
+            && $factor->[0][0] ne $NUMBER_NAMES{$MODE}{1}
+            && $factor->[0][1] eq $NUMBER_NAMES{$MODE}{100} )
         {
             $factor->[0][1] .= 's';
         }
 
         # pluriel vingt: 'quatre-vingts' but 'quatre-vingt-trois'
-        if ( !$factor->[1] && $factor->[0][0]
-          && $factor->[0][0] =~ /.+$NUMBER_NAMES{$MODE}{20}$/ )
+        if ( !$factor->[1]
+            && $factor->[0][0]
+            && $factor->[0][0] =~ /.+$NUMBER_NAMES{$MODE}{20}$/ )
         {
             $factor->[0][0] .= 's';
         }
@@ -300,8 +322,9 @@ sub do_get_string {
 sub pow10Block {
     my ($number) = @_;
     if ($number) {
-		# XXX the '+1' is needed because of a rounding error with
-		# int() when using 1000 or 1_000_000 as number...
+
+        # XXX the '+1' is needed because of a rounding error with
+        # int() when using 1000 or 1_000_000 as number...
         return ( int( ( log( $number + 1 ) / log(10) ) / 3 ) * 3 );
     }
     else {
@@ -323,16 +346,17 @@ sub string_to_number {
         return undef;
     }
 
-
-	if ( abs $string > 999999999999999 ){
+    if ( abs $string > 999999999999999 ) {
         carp "number too big: '$string'";
-		return undef;
-	}
+        return undef;
+    }
 
-#use POSIX qw(modf);
-#my ( $decimal, $integral) = modf( $string );
+    #use POSIX qw(modf);
+    #my ( $decimal, $integral) = modf( $string );
     my $integral = abs int $string;
-    (my $decimal) = $string =~ /\.(\d+)/;
+
+    ( my $decimal ) = $string =~ /\.(\d+)/;
+
     my $sign = abs $string == $string ? 1 : 0;
 
     return ( $integral, $decimal, $sign );
@@ -344,7 +368,7 @@ sub parse_number {
     if ( defined $number && !$number ) {
         return {
             1 => {
-				number => $number,
+                number    => $number,
                 magnitude => '',
                 factor    => [ [ $NUMBER_NAMES{$MODE}{0} ] ]
             }
@@ -371,7 +395,7 @@ sub parse_number {
     if ($number) {
         $names{1}{factor}    = parse_number_low($number);
         $names{1}{magnitude} = '';
-        $names{1}{number} = $number;
+        $names{1}{number}    = $number;
     }
     return \%names;
 }
@@ -405,9 +429,10 @@ sub parse_number_low {
 
         # XXX Special case for 71 :-/
         my $str_number =
-          $decim == 70 && $unit == 11 ?
-          $NUMBER_NAMES{$MODE}{$decim} . ' et ' . $NUMBER_NAMES{$MODE}{$unit} :
-          $NUMBER_NAMES{$MODE}{$decim} . '-' . $NUMBER_NAMES{$MODE}{$unit};
+          $decim == 70
+          && $unit == 11
+          ? $NUMBER_NAMES{$MODE}{$decim} . ' et ' . $NUMBER_NAMES{$MODE}{$unit}
+          : $NUMBER_NAMES{$MODE}{$decim} . '-' . $NUMBER_NAMES{$MODE}{$unit};
         push @names, [$str_number];
     }
     else {
@@ -416,15 +441,17 @@ sub parse_number_low {
             push @names, [ $NUMBER_NAMES{$MODE}{ $decim + $unit } ];
         }
         elsif ( $unit == 1 || $unit == 11 ) {
-            push @names, [ $NUMBER_NAMES{$MODE}{$decim} . ' et '
-                . $NUMBER_NAMES{$MODE}{$unit} ];
+            push @names,
+              [ $NUMBER_NAMES{$MODE}{$decim} . ' et '
+                  . $NUMBER_NAMES{$MODE}{$unit} ];
         }
         elsif ( $unit == 0 ) {
             push @names, [ $NUMBER_NAMES{$MODE}{$decim} ];
         }
         else {
-            push @names, [ $NUMBER_NAMES{$MODE}{$decim} . '-'
-                . $NUMBER_NAMES{$MODE}{$unit} ];
+            push @names,
+              [ $NUMBER_NAMES{$MODE}{$decim} . '-'
+                  . $NUMBER_NAMES{$MODE}{$unit} ];
         }
     }
     return \@names;
