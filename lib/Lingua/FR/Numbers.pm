@@ -12,11 +12,11 @@ use vars qw(
   %OUTPUT_DECIMAL_DELIMITER
 );
 
-$VERSION   = 0.01;
+$VERSION   = 0.02;
 @ISA       = qw(Exporter);
 @EXPORT_OK = qw(
-  number_to_fr
-  number_to_fr_FR
+  &number_to_fr
+  &number_to_fr_FR
 );
 
 %SIGN_NAMES = (
@@ -97,7 +97,8 @@ equivalents
 =head1 DESCRIPTION
 
 This module tries to convert a number into French cardinal numeral
-adjective. It only supports integers number for now.
+adjective. It supports decimals number, but this feature is
+experimental.
 
 The interface tries to conform to the one defined in Lingua::EN::Number,
 though this module does not provide any parse() method. Also, notes that
@@ -175,7 +176,7 @@ sub new {
 
 =head2 parse( $number )
 
-Initialize (or reinitialize) the instance. Note that the number is treated as an integer.
+Initialize (or reinitialize) the instance. 
 
 =cut
 
@@ -189,14 +190,12 @@ sub parse {
 
     $self->{numeric_data}{number} = $number;
 
-    # TODO
-    #$self->{numeric_data}{decimal} = $decimal;
+    $self->{numeric_data}{decimal} = $decimal;
     $self->{numeric_data}{sign} = $sign;
 
     $self->{string_data}{number} = parse_number($number);
 
-    # TODO
-    #$self->{string_data}{decimal}  = parse_number($decimal);
+    $self->{string_data}{decimal}  = parse_number($decimal);
     $self->{string_data}{sign} = $SIGN_NAMES{$MODE}[$sign];
 
     return 1;
@@ -330,11 +329,13 @@ sub string_to_number {
 		return undef;
 	}
 
-    my $integer = abs int $string;
-    my $decimal = $string - int($string);    # XXX beware of 'infinite decimals'
+#use POSIX qw(modf);
+#my ( $decimal, $integral) = modf( $string );
+    my $integral = abs int $string;
+    (my $decimal) = $string =~ /\.(\d+)/;
     my $sign = abs $string == $string ? 1 : 0;
 
-    return ( $integer, $decimal, $sign );
+    return ( $integral, $decimal, $sign );
 }
 
 sub parse_number {
@@ -343,6 +344,7 @@ sub parse_number {
     if ( defined $number && !$number ) {
         return {
             1 => {
+				number => $number,
                 magnitude => '',
                 factor    => [ [ $NUMBER_NAMES{$MODE}{0} ] ]
             }
@@ -360,6 +362,7 @@ sub parse_number {
 
         $names{$component}{factor}    = $factorName;
         $names{$component}{magnitude} = $magnitude;
+        $names{$component}{number}    = $number;
 
         $number -= $component;
         $powerOfTen = pow10Block($number);
@@ -368,6 +371,7 @@ sub parse_number {
     if ($number) {
         $names{1}{factor}    = parse_number_low($number);
         $names{1}{magnitude} = '';
+        $names{1}{number} = $number;
     }
     return \%names;
 }
@@ -438,8 +442,7 @@ __END__
 
 =item *
 
-support decimal numbers - although I do not know how decimal are
-supposed to be written in French.
+better support for decimal numbers ( 1.05 != 1.5 or is it? )
 
 =item *
 

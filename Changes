@@ -1,3 +1,5 @@
+0.02 - Added Lingua::FR::Numbers::Ordinate to the module
+       Added limited support for decimals
+
 0.01 - Initial releases
-       Bad hack regex for cleaning a misbehaving plural
 	   Special case for 'soixante et onze' (is this the only one?)
