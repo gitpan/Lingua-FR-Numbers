@@ -1,0 +1,13 @@
+Changes
+MANIFEST
+MANIFEST.SKIP
+Makefile.PL
+README
+lib/Lingua/FR/Numbers.pm
+t/00basic.t
+t/01integers.t
+t/02object_oriented.t
+t/03decimals.t
+t/04crash.t
+t/numbers
+t/decimals

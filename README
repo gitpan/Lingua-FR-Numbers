@@ -1,0 +1,31 @@
+==============================================================================
+
+ Release 0.01 of Lingua::FR::Numbers
+
+==============================================================================
+
+DESCRIPTION
+
+This is Lingua::FR::Numbers, a module for converting numbers into
+their French text equivalents.
+
+==============================================================================
+
+AUTHOR
+
+Briac Pilpré
+briac@cpan.org
+
+==============================================================================
+
+AVAILABILITY
+
+Lingua::FR::Numbers has been uploaded to the CPAN
+
+==============================================================================
+
+Copyright (c) 2002 Briac Pilpré. All rights reserved.
+
+This package is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+

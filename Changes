@@ -1,0 +1,3 @@
+0.01 - Initial releases
+       Bad hack regex for cleaning a misbehaving plural
+	   Special case for 'soixante et onze' (is this the only one?)
